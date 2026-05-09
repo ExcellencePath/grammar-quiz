@@ -1,0 +1,559 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Grammar Quiz – There Is & There Are</title>
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700;800&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #0d0f1a;
+    --card: #161929;
+    --border: #252a45;
+    --accent: #00e5a0;
+    --accent2: #ff4d6d;
+    --text: #e8eaf6;
+    --muted: #7b82a8;
+    --correct: #00e5a0;
+    --wrong: #ff4d6d;
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Tajawal', sans-serif;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 40px 16px 80px;
+    overflow-x: hidden;
+  }
+
+  /* Background mesh */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background:
+      radial-gradient(ellipse 60% 50% at 20% 10%, rgba(0,229,160,0.08) 0%, transparent 60%),
+      radial-gradient(ellipse 50% 40% at 80% 80%, rgba(255,77,109,0.08) 0%, transparent 60%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .container {
+    position: relative;
+    z-index: 1;
+    width: 100%;
+    max-width: 680px;
+  }
+
+  /* Header */
+  .header {
+    text-align: center;
+    margin-bottom: 48px;
+    animation: fadeDown 0.7s ease both;
+  }
+  .header .label {
+    font-size: 11px;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    color: var(--accent);
+    font-weight: 700;
+    margin-bottom: 12px;
+  }
+  .header h1 {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(28px, 6vw, 48px);
+    line-height: 1.1;
+    color: #fff;
+  }
+  .header h1 span { color: var(--accent); }
+  .header p {
+    margin-top: 12px;
+    color: var(--muted);
+    font-size: 15px;
+    line-height: 1.6;
+  }
+
+  /* Progress bar */
+  .progress-wrap {
+    margin-bottom: 32px;
+    animation: fadeIn 0.6s 0.3s ease both;
+  }
+  .progress-top {
+    display: flex;
+    justify-content: space-between;
+    font-size: 12px;
+    color: var(--muted);
+    margin-bottom: 8px;
+    letter-spacing: 1px;
+  }
+  .progress-bar {
+    height: 4px;
+    background: var(--border);
+    border-radius: 99px;
+    overflow: hidden;
+  }
+  .progress-fill {
+    height: 100%;
+    background: var(--accent);
+    border-radius: 99px;
+    transition: width 0.5s cubic-bezier(.4,0,.2,1);
+  }
+
+  /* Question card */
+  .question-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 32px;
+    margin-bottom: 16px;
+    animation: slideUp 0.5s ease both;
+    transition: border-color 0.3s;
+  }
+  .question-card:hover { border-color: #353d6a; }
+
+  .q-number {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--accent);
+    font-weight: 700;
+    margin-bottom: 14px;
+  }
+  .q-number::before {
+    content: '';
+    display: inline-block;
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--accent);
+  }
+
+  .q-text {
+    font-size: 18px;
+    font-weight: 700;
+    line-height: 1.5;
+    color: #fff;
+    margin-bottom: 22px;
+    direction: ltr;
+    text-align: left;
+  }
+  .q-text em {
+    color: var(--accent);
+    font-style: normal;
+    background: rgba(0,229,160,0.1);
+    padding: 2px 6px;
+    border-radius: 4px;
+  }
+
+  /* Options */
+  .options {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .option {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 14px 18px;
+    background: rgba(255,255,255,0.03);
+    border: 1.5px solid var(--border);
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    direction: ltr;
+    text-align: left;
+  }
+  .option:hover:not(.disabled) {
+    background: rgba(0,229,160,0.07);
+    border-color: var(--accent);
+    transform: translateX(4px);
+  }
+  .option.selected {
+    border-color: var(--accent);
+    background: rgba(0,229,160,0.1);
+  }
+  .option.correct {
+    border-color: var(--correct);
+    background: rgba(0,229,160,0.15);
+  }
+  .option.wrong {
+    border-color: var(--wrong);
+    background: rgba(255,77,109,0.1);
+  }
+  .option.disabled { cursor: default; }
+
+  .opt-letter {
+    width: 30px; height: 30px;
+    border-radius: 8px;
+    border: 1.5px solid var(--border);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--muted);
+    flex-shrink: 0;
+    transition: all 0.2s;
+  }
+  .option.selected .opt-letter,
+  .option.correct .opt-letter {
+    border-color: var(--accent);
+    background: var(--accent);
+    color: #000;
+  }
+  .option.wrong .opt-letter {
+    border-color: var(--wrong);
+    background: var(--wrong);
+    color: #fff;
+  }
+
+  .opt-text {
+    font-size: 15px;
+    color: var(--text);
+    flex: 1;
+  }
+
+  /* Submit button */
+  .submit-wrap {
+    margin-top: 32px;
+    display: flex;
+    justify-content: center;
+    animation: fadeIn 0.6s 0.5s ease both;
+  }
+
+  .btn {
+    padding: 16px 56px;
+    background: var(--accent);
+    color: #000;
+    border: none;
+    border-radius: 99px;
+    font-family: 'Tajawal', sans-serif;
+    font-size: 16px;
+    font-weight: 800;
+    cursor: pointer;
+    transition: all 0.25s ease;
+    letter-spacing: 0.5px;
+    position: relative;
+    overflow: hidden;
+  }
+  .btn::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.25), transparent);
+    transform: translateX(-100%);
+    transition: transform 0.5s ease;
+  }
+  .btn:hover::after { transform: translateX(100%); }
+  .btn:hover { transform: translateY(-2px); box-shadow: 0 8px 30px rgba(0,229,160,0.3); }
+  .btn:active { transform: translateY(0); }
+  .btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  /* Result screen */
+  .result-screen {
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    padding: 48px 24px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 24px;
+    animation: popIn 0.6s cubic-bezier(.34,1.56,.64,1) both;
+  }
+  .result-screen.show { display: flex; }
+
+  .score-circle {
+    width: 140px; height: 140px;
+    border-radius: 50%;
+    border: 4px solid var(--accent);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 28px;
+    position: relative;
+    box-shadow: 0 0 40px rgba(0,229,160,0.2);
+  }
+  .score-circle .num {
+    font-size: 48px;
+    font-weight: 800;
+    color: var(--accent);
+    line-height: 1;
+  }
+  .score-circle .denom {
+    font-size: 16px;
+    color: var(--muted);
+  }
+
+  .result-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 30px;
+    color: #fff;
+    margin-bottom: 10px;
+  }
+  .result-msg {
+    color: var(--muted);
+    font-size: 16px;
+    line-height: 1.6;
+    margin-bottom: 32px;
+    max-width: 340px;
+  }
+
+  .answers-review {
+    width: 100%;
+    text-align: left;
+    direction: ltr;
+    border-top: 1px solid var(--border);
+    padding-top: 24px;
+    margin-bottom: 32px;
+  }
+  .answers-review h3 {
+    font-size: 13px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 16px;
+  }
+  .review-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 0;
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+    font-size: 14px;
+  }
+  .review-item .ri-q { color: var(--muted); min-width: 30px; }
+  .review-item .ri-a { flex: 1; color: var(--text); }
+  .ri-icon { font-size: 18px; }
+
+  .retry-btn {
+    padding: 14px 44px;
+    background: transparent;
+    border: 2px solid var(--accent);
+    color: var(--accent);
+    border-radius: 99px;
+    font-family: 'Tajawal', sans-serif;
+    font-size: 15px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.25s;
+  }
+  .retry-btn:hover {
+    background: var(--accent);
+    color: #000;
+  }
+
+  /* Animations */
+  @keyframes fadeDown {
+    from { opacity: 0; transform: translateY(-20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes slideUp {
+    from { opacity: 0; transform: translateY(24px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+  @keyframes popIn {
+    from { opacity: 0; transform: scale(0.85); }
+    to { opacity: 1; transform: scale(1); }
+  }
+
+  .questions-wrap .question-card:nth-child(1) { animation-delay: 0.1s; }
+  .questions-wrap .question-card:nth-child(2) { animation-delay: 0.18s; }
+  .questions-wrap .question-card:nth-child(3) { animation-delay: 0.26s; }
+  .questions-wrap .question-card:nth-child(4) { animation-delay: 0.34s; }
+  .questions-wrap .question-card:nth-child(5) { animation-delay: 0.42s; }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <!-- Header -->
+  <div class="header">
+    <div class="label">Grammar Quiz</div>
+    <h1><span>There Is</span> & <span>There Are</span></h1>
+    <p>اختر الإجابة الصحيحة لكل سؤال، ثم اضغط إرسال لمعرفة نتيجتك</p>
+  </div>
+
+  <!-- Quiz Form -->
+  <div id="quiz-form">
+    <!-- Progress -->
+    <div class="progress-wrap">
+      <div class="progress-top">
+        <span>PROGRESS</span>
+        <span id="progress-text">0 / 5</span>
+      </div>
+      <div class="progress-bar"><div class="progress-fill" id="progress-fill" style="width:0%"></div></div>
+    </div>
+
+    <!-- Questions -->
+    <div class="questions-wrap" id="questions-wrap"></div>
+
+    <div class="submit-wrap">
+      <button class="btn" id="submit-btn" disabled onclick="submitQuiz()">إرسال الإجابات</button>
+    </div>
+  </div>
+
+  <!-- Result -->
+  <div class="result-screen" id="result-screen">
+    <div class="score-circle">
+      <span class="num" id="score-num">0</span>
+      <span class="denom">/ 5</span>
+    </div>
+    <div class="result-title" id="result-title"></div>
+    <p class="result-msg" id="result-msg"></p>
+    <div class="answers-review" id="answers-review">
+      <h3>مراجعة الإجابات · REVIEW</h3>
+    </div>
+    <button class="retry-btn" onclick="retryQuiz()">حاول مرة أخرى</button>
+  </div>
+
+</div>
+
+<script>
+const questions = [
+  {
+    text: '... <em>many people</em> standing outside the movie theater.',
+    options: ['There is', 'There are', 'There'],
+    correct: 1 // B = index 1
+  },
+  {
+    text: '... <em>a big group</em> of people looking at things in the museum.',
+    options: ['There', 'There is', 'There are'],
+    correct: 1 // B = index 1
+  },
+  {
+    text: 'There ... <em>a small cat</em> playing with some toys.',
+    options: ['are', 'have', 'is'],
+    correct: 2 // C = index 2
+  },
+  {
+    text: '(A) How many cups ...?<br><small style="color:#7b82a8">(B) There are two cups.</small>',
+    options: ['are there', 'there are', 'there have'],
+    correct: 0 // A = index 0
+  },
+  {
+    text: '(A) Are there two birds in the tree?<br><small style="color:#7b82a8">(B) Yes, ....</small>',
+    options: ['there is', 'are there', 'there are'],
+    correct: 2 // C = index 2
+  }
+];
+
+const userAnswers = new Array(questions.length).fill(null);
+const letters = ['a', 'b', 'c'];
+
+function buildQuiz() {
+  const wrap = document.getElementById('questions-wrap');
+  wrap.innerHTML = '';
+  questions.forEach((q, qi) => {
+    const card = document.createElement('div');
+    card.className = 'question-card';
+    card.innerHTML = `
+      <div class="q-number">Question ${qi + 1}</div>
+      <div class="q-text">${q.text}</div>
+      <div class="options" id="options-${qi}">
+        ${q.options.map((opt, oi) => `
+          <div class="option" id="opt-${qi}-${oi}" onclick="selectOption(${qi}, ${oi})">
+            <div class="opt-letter">${letters[oi].toUpperCase()}</div>
+            <div class="opt-text">${opt}</div>
+          </div>
+        `).join('')}
+      </div>
+    `;
+    wrap.appendChild(card);
+  });
+}
+
+function selectOption(qi, oi) {
+  // Deselect previous
+  if (userAnswers[qi] !== null) {
+    document.getElementById(`opt-${qi}-${userAnswers[qi]}`).classList.remove('selected');
+  }
+  userAnswers[qi] = oi;
+  document.getElementById(`opt-${qi}-${oi}`).classList.add('selected');
+  updateProgress();
+}
+
+function updateProgress() {
+  const answered = userAnswers.filter(a => a !== null).length;
+  document.getElementById('progress-text').textContent = `${answered} / ${questions.length}`;
+  document.getElementById('progress-fill').style.width = `${(answered / questions.length) * 100}%`;
+  document.getElementById('submit-btn').disabled = answered < questions.length;
+}
+
+function submitQuiz() {
+  let score = 0;
+  questions.forEach((q, qi) => {
+    const chosen = userAnswers[qi];
+    questions[qi].options.forEach((_, oi) => {
+      const el = document.getElementById(`opt-${qi}-${oi}`);
+      el.classList.add('disabled');
+      el.classList.remove('selected');
+      if (oi === q.correct) el.classList.add('correct');
+      else if (oi === chosen && chosen !== q.correct) el.classList.add('wrong');
+    });
+    if (chosen === q.correct) score++;
+  });
+
+  setTimeout(() => showResult(score), 700);
+}
+
+function showResult(score) {
+  document.getElementById('quiz-form').style.display = 'none';
+  const rs = document.getElementById('result-screen');
+  rs.classList.add('show');
+  document.getElementById('score-num').textContent = score;
+
+  const titles = ['Keep Practicing!', 'Not Bad!', 'Good Job!', 'Great Work!', 'Well Done!', 'Perfect Score! 🎉'];
+  const msgs = [
+    'لا تستسلم، راجع القواعد وحاول مرة أخرى.',
+    'أداء جيد، لكن هناك مجال للتحسين!',
+    'فهمت معظم القواعد، استمر!',
+    'إجاباتك صحيحة في معظمها، عمل رائع!',
+    'كادت أن تكون مثالية، رائع جداً!',
+    'أجبت على كل الأسئلة بشكل صحيح! ممتاز!'
+  ];
+  document.getElementById('result-title').textContent = titles[score];
+  document.getElementById('result-msg').textContent = msgs[score];
+
+  const reviewEl = document.getElementById('answers-review');
+  const reviewHTML = questions.map((q, qi) => {
+    const correct = userAnswers[qi] === q.correct;
+    const yourAns = letters[userAnswers[qi]].toUpperCase() + ') ' + q.options[userAnswers[qi]];
+    const corrAns = letters[q.correct].toUpperCase() + ') ' + q.options[q.correct];
+    return `
+      <div class="review-item">
+        <div class="ri-q">Q${qi+1}</div>
+        <div class="ri-a">${correct ? yourAns : `<span style="color:var(--wrong);text-decoration:line-through">${yourAns}</span> → <span style="color:var(--correct)">${corrAns}</span>`}</div>
+        <div class="ri-icon">${correct ? '✅' : '❌'}</div>
+      </div>
+    `;
+  }).join('');
+  reviewEl.innerHTML = '<h3>مراجعة الإجابات · REVIEW</h3>' + reviewHTML;
+}
+
+function retryQuiz() {
+  userAnswers.fill(null);
+  document.getElementById('result-screen').classList.remove('show');
+  document.getElementById('quiz-form').style.display = 'block';
+  buildQuiz();
+  updateProgress();
+}
+
+buildQuiz();
+updateProgress();
+</script>
+</body>
+</html>
